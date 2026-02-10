@@ -27,7 +27,8 @@ pipeline {
             steps {
                 echo 'Verifying checked out files...'
                 sh 'ls -la'
-                sh 'cat package.json'
+                sh 'ls -la apps/nodejs-app/'
+                sh 'cat apps/nodejs-app/package.json'
             }
         }
         
@@ -35,12 +36,14 @@ pipeline {
             steps {
                 echo "Building Docker image: ${IMAGE_NAME}:${IMAGE_TAG}"
                 script {
-                    sh """
-                        docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                        docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
-                        echo "Image built successfully"
-                        docker images | grep ${IMAGE_NAME}
-                    """
+                    dir('apps/nodejs-app') {
+                        sh """
+                            docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                            docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+                            echo "Image built successfully"
+                            docker images | grep ${IMAGE_NAME}
+                        """
+                    }
                 }
             }
         }

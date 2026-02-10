@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    restart: unless-stopped
+    
+    # User configuration
+    # Run as root to access Docker socket (alternatively, configure proper permissions)
+    user: root
+    
+    # Port mappings
+    ports:
+      - "8080:8080"    # Jenkins Web UI
+      - "50000:50000"  # Jenkins agent communication
+    
+    # Volume mappings
+    volumes:
+      # Persist Jenkins data
+      - jenkins_home:/var/jenkins_home
+      
+      # Docker-in-Docker: Mount Docker socket to allow Jenkins to run Docker commands
+      - /var/run/docker.sock:/var/run/docker.sock
+      
+      # Optional: Mount Docker binary if needed
+      # - /usr/bin/docker:/usr/bin/docker
+    
+    # Environment variables (optional)
+    # environment:
+      # Java options for Jenkins (customize as needed)
+      # - JAVA_OPTS=-Xmx2048m -Xms512m
+      
+      # Docker group ID (match host docker group if needed)
+      # Get host docker GID with: getent group docker | cut -d: -f3
+      # - DOCKER_GID=999
+    
+    # Network configuration
+    networks:
+      - devsecops-network
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+# Named volumes
+volumes:
+  jenkins_home:
+    driver: local
+    # Optional: specify driver options for better performance
+    # driver_opts:
+    #   type: none
+    #   device: /path/to/jenkins_home
+    #   o: bind
+
+# Networks
+networks:
+  devsecops-network:
+    driver: bridge
+    # Optional: specify subnet
+    # ipam:
+    #   config:
+    #     - subnet: 172.20.0.0/16
+
+# Usage Instructions:
+# 
+# Start Jenkins:
+#   docker-compose up -d
+# 
+# View logs:
+#   docker-compose logs -f jenkins
+# 
+# Stop Jenkins:
+#   docker-compose down
+# 
+# Stop and remove volumes:
+#   docker-compose down -v
+# 
+# Get initial admin password:
+#   docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+# 
+# Access Jenkins:
+#   http://localhost:8080
