@@ -26,12 +26,12 @@ services:
       # Optional: Mount Docker binary if needed
       # - /usr/bin/docker:/usr/bin/docker
     
-    # Environment variables
-    environment:
-      # Java options for Jenkins
-      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+    # Environment variables (optional)
+    # environment:
+      # Java options for Jenkins (customize as needed)
+      # - JAVA_OPTS=-Xmx2048m -Xms512m
       
-      # Docker group ID (match host docker group)
+      # Docker group ID (match host docker group if needed)
       # Get host docker GID with: getent group docker | cut -d: -f3
       # - DOCKER_GID=999
     
