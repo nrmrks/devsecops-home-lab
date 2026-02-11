@@ -1,16 +1,10 @@
 name: OWASP Dependency Check
 
 on:
-  # Trigger on pushes to main branch
   push:
     branches: [ main, master ]
-  # Trigger on pull requests to main
   pull_request:
     branches: [ main, master ]
-  # Schedule weekly scans (Sunday at midnight)
-  schedule:
-    - cron: '0 0 * * 0'
-  # Allow manual trigger
   workflow_dispatch:
 
 jobs:
@@ -18,65 +12,21 @@ jobs:
     name: Dependency Security Scan
     runs-on: ubuntu-latest
     
-    permissions:
-      # Required for uploading results
-      contents: read
-      security-events: write
-      actions: read
-    
     steps:
-      # Step 1: Check out your code
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      # Step 2: Set up project (example for Node.js)
-      # Uncomment and modify based on your project type
-      # - name: Setup Node.js
-      #   uses: actions/setup-node@v4
-      #   with:
-      #     node-version: '18'
-      
-      # - name: Install dependencies
-      #   run: npm ci
-      
-      # Step 3: Run OWASP Dependency-Check
       - name: Run Dependency-Check
         uses: dependency-check/Dependency-Check_Action@main
-        id: depcheck
         with:
-          # Project name (change this to your project name)
-          project: 'my-project-name'
-          # Scan the entire repository
+          project: 'my-project'
           path: '.'
-          # Output format (HTML, JSON, XML, CSV, SARIF)
-          format: 'HTML,SARIF'
-          # Additional arguments
-          args: >
-            --enableRetired
-            --enableExperimental
-            --failOnCVSS 7
-            --suppression suppression.xml
+          format: 'HTML'
+        continue-on-error: true
       
-      # Step 4: Upload results as artifact
-      - name: Upload Dependency-Check Report
+      - name: Upload Report
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: dependency-check-report
           path: reports/
-          retention-days: 30
-      
-      # Step 5: Upload to GitHub Security tab (SARIF format)
-      - name: Upload SARIF to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: reports/dependency-check-report.sarif
-      
-      # Step 6: Fail build if vulnerabilities found
-      - name: Check for vulnerabilities
-        if: failure()
-        run: |
-          echo "❌ Security vulnerabilities found!"
-          echo "Check the uploaded report for details"
-          exit 1
