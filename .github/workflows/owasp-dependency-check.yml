@@ -1,32 +1,65 @@
 name: OWASP Dependency Check
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
-  workflow_dispatch:
 
 jobs:
   dependency-check:
     name: Dependency Security Scan
     runs-on: ubuntu-latest
     
+    permissions:
+      contents: read
+      security-events: write
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       
+      # Debug: Show what files exist before scan
+      - name: List files before scan
+        run: |
+          echo "=== Current directory ==="
+          pwd
+          echo "=== Files in workspace ==="
+          ls -la
+          echo "=== Workspace path ==="
+          echo ${{ github.workspace }}
+      
       - name: Run Dependency-Check
         uses: dependency-check/Dependency-Check_Action@main
+        id: depcheck
+        continue-on-error: true
         with:
-          project: 'my-project'
+          project: 'test-project'
           path: '.'
           format: 'HTML'
-        continue-on-error: true
+          out: 'reports'
       
-      - name: Upload Report
+      # Debug: Show what was created
+      - name: List files after scan
+        if: always()
+        run: |
+          echo "=== Checking for reports directory ==="
+          ls -la
+          if [ -d "reports" ]; then
+            echo "=== Reports directory exists ==="
+            ls -la reports/
+          else
+            echo "=== Reports directory NOT found ==="
+          fi
+          echo "=== Searching for any dependency-check files ==="
+          find . -name "*dependency-check*" -type f 2>/dev/null || echo "No files found"
+      
+      - name: Upload Report (if exists)
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: dependency-check-report
-          path: reports/
+          path: |
+            reports/
+            *.html
+            *.json
+          if-no-files-found: warn
